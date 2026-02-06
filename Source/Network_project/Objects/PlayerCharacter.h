@@ -15,6 +15,7 @@ class UInputMappingContext;
 class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
+class UGameplayAbility;
 
 UCLASS()
 class NETWORK_PROJECT_API APlayerCharacter : public APaperCharacter, public IAbilitySystemInterface
@@ -29,6 +30,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	class UAbilitySystemComponent* AbilitySystemComponent;
+
+	void UseSkill(); 
 
 	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	class UMyAttributeSet* AttributeSet;*/
@@ -51,4 +54,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+
+	// [1] 사용할 스킬 클래스 (블루프린트에서 GA_Fireball 넣을 변수)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<UGameplayAbility> SkillAbilityClass;
+
+	// [2] 입력 액션 (블루프린트에서 IA_Skill_Q 넣을 변수)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* SkillAction;
 };

@@ -46,11 +46,23 @@ APlayerCharacter::APlayerCharacter()
 	// AttributeSet 생성 (나중에 클래스 만들고 주석 해제)
 	// AttributeSet = CreateDefaultSubobject<UMyAttributeSet>(TEXT("AttributeSet"));
 
+	// ASC 생성
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+
 }
 
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// [중요] 스킬 부여 (GiveAbility)는 권한이 있는 서버에서만 수행해야 함!
+	if (HasAuthority() && AbilitySystemComponent && SkillAbilityClass)
+	{
+		// 스킬을 캐릭터에게 "가르쳐줍니다" (장착)
+		// GiveAbility는 SpecHandle을 반환하는데, 나중에 스킬 레벨업 등을 할 때 씁니다.
+		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(SkillAbilityClass, 1, 0));
+	}
 
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
@@ -79,6 +91,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		{
 			EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 		}
+		if (SkillAction)
+		{
+			// Q키를 누르면(Started) ActivateSkill 함수 실행
+			EnhancedInputComponent->BindAction(SkillAction, ETriggerEvent::Started, this, &APlayerCharacter::UseSkill);
+		}
 	}
 }
 
@@ -99,4 +116,14 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 UAbilitySystemComponent* APlayerCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void APlayerCharacter::UseSkill()
+{
+	if (AbilitySystemComponent && SkillAbilityClass)
+	{
+		// [핵심] 해당 클래스(GA_Fireball)를 찾아서 발동시킵니다.
+		// TryActivateAbilityByClass는 내부적으로 알아서 네트워크 처리를 해줍니다.
+		AbilitySystemComponent->TryActivateAbilityByClass(SkillAbilityClass);
+	}
 }
