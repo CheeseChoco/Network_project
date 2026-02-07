@@ -46,10 +46,6 @@ APlayerCharacter::APlayerCharacter()
 	// AttributeSet 생성 (나중에 클래스 만들고 주석 해제)
 	// AttributeSet = CreateDefaultSubobject<UMyAttributeSet>(TEXT("AttributeSet"));
 
-	// ASC 생성
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true);
-
 }
 
 void APlayerCharacter::BeginPlay()

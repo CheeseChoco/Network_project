@@ -32,7 +32,7 @@ ANPProjectile::ANPProjectile()
 	// [핵심] 2D 횡스크롤을 위한 Y축(깊이) 고정
 	// 이걸 켜면 물리 엔진이 강제로 Y축 이동을 막아버립니다. (Paper2D 필수 설정)
 	ProjectileMovement->bConstrainToPlane = true;
-	ProjectileMovement->SetPlaneConstraintNormal(FVector(0.0f, 1.0f, 0.0f)); // Y축을 기준으로 막음
+	ProjectileMovement->SetPlaneConstraintNormal(FVector(0.0f, 0.0f, 1.0f)); // Y축을 기준으로 막음
 	ProjectileMovement->SetPlaneConstraintOrigin(FVector(0.0f, 0.0f, 0.0f)); // Y=0 평면 위에서만 놀아라
 }
 

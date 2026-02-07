@@ -89,21 +89,34 @@ void UNPGameplayAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle 
 FVector UNPGameplayAbility_Skill::GetDirectionToMouse(APlayerController* PC, FVector StartLocation)
 {
 	FVector WorldLoc, WorldDir;
+
+	// 1. 마우스 위치를 3D 월드 좌표와 방향으로 변환
 	if (PC->DeprojectMousePositionToWorld(WorldLoc, WorldDir))
 	{
-		// 2D 횡스크롤 기준 Y=0 평면 교차점 계산
-		// 만약 Top-Down 게임이라면 Z=0 (혹은 캐릭터 높이) 평면으로 바꿔야 합니다.
-		float TargetY = 0.0f;
+		// [수정됨] 탑다운 게임은 바닥(Z=0) 평면과 교차점을 찾아야 함.
 
-		// 0으로 나누기 방지
-		if (FMath::IsNearlyZero(WorldDir.Y)) return FVector::ForwardVector;
+		// 카메라가 바닥을 절대 안 보는 상황(완전 수평) 예외 처리
+		if (FMath::IsNearlyZero(WorldDir.Z))
+		{
+			return PC->GetPawn() ? PC->GetPawn()->GetActorForwardVector() : FVector::ForwardVector;
+		}
 
-		float t = (TargetY - WorldLoc.Y) / WorldDir.Y;
-		FVector TargetPos = WorldLoc + (WorldDir * t);
+		// 2. 마우스 레이저가 바닥(Z=0)에 닿는 거리(t) 계산
+		// 공식: (목표높이 - 현재높이) / 기울기
+		float t = (0.0f - WorldLoc.Z) / WorldDir.Z;
 
-		return (TargetPos - StartLocation).GetSafeNormal();
+		// 3. 실제 바닥 좌표 계산
+		FVector MouseGroundLocation = WorldLoc + (WorldDir * t);
+
+		// 4. 방향 벡터 계산 (목표점 - 시작점)
+		FVector Direction = MouseGroundLocation - StartLocation;
+
+		// [중요] 높낮이(Z) 무시하고 수평으로만 쏘기
+		// 이걸 안 하면 캐릭터 손에서 발등으로 꽂히는 샷이 나갑니다.
+		Direction.Z = 0.0f;
+
+		return Direction.GetSafeNormal();
 	}
 
-	// 마우스 위치 못 찾으면 그냥 캐릭터 정면으로 발사
-	return PC->GetPawn() ? PC->GetPawn()->GetActorForwardVector() : FVector::ForwardVector;
+	return FVector::ForwardVector;
 }
