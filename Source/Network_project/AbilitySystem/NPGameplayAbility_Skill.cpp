@@ -52,6 +52,27 @@ void UNPGameplayAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle 
 			// 서버 권한 확인 (투사체는 서버에서 소환해야 함)
 			if (HasAuthority(&ActivationInfo))
 			{
+				FGameplayEffectSpecHandle DamageSpecHandle;
+				if (SkillData->DamageEffectClass)
+				{
+					// 내 능력(Ability)을 기반으로 GE 클래스에서 명세서를 찍어냅니다.
+					DamageSpecHandle = MakeOutgoingGameplayEffectSpec(SkillData->DamageEffectClass, GetAbilityLevel());
+
+					FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
+
+					if (DamageSpecHandle.IsValid())
+					{
+						// 데이터 테이블의 Damage 수치를 GE 명세서에 찔러 넣습니다!
+						DamageSpecHandle.Data.Get()->SetSetByCallerMagnitude(DamageTag, SkillData->Damage);
+					}
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("데이터 테이블에 DamageEffectClass가 비어있습니다!"));
+				}
+
+
+
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.Owner = ActorInfo->AvatarActor.Get();
 				SpawnParams.Instigator = Cast<APawn>(ActorInfo->AvatarActor.Get());
@@ -64,14 +85,16 @@ void UNPGameplayAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle 
 					SpawnParams
 				);
 
+				Projectile->DamageEffectSpecHandle = DamageSpecHandle;
+
 				// [속도 덮어쓰기] 데이터 테이블에 적힌 속도로 변경
 				if (Projectile && Projectile->ProjectileMovement)
 				{
+
 					Projectile->ProjectileMovement->InitialSpeed = SkillData->ProjectileSpeed;
 					Projectile->ProjectileMovement->MaxSpeed = SkillData->ProjectileSpeed;
 
-					// (추후 구현) 데미지 정보도 투사체에 넘겨주면 됩니다.
-					// Projectile->Damage = SkillData->Damage; 
+
 				}
 			}
 		}

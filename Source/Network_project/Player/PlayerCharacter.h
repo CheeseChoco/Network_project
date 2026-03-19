@@ -3,11 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Character/NPCharacter.h"
 #include "PaperCharacter.h"
 #include "InputActionValue.h"
-#include "AbilitySystemInterface.h"
 #include "PlayerCharacter.generated.h"
-
 /**
  * 
  */
@@ -18,7 +17,7 @@ class UCameraComponent;
 class UGameplayAbility;
 
 UCLASS()
-class NETWORK_PROJECT_API APlayerCharacter : public APaperCharacter, public IAbilitySystemInterface
+class NETWORK_PROJECT_API APlayerCharacter : public ANPCharacter
 {
 	GENERATED_BODY()
 	
@@ -27,9 +26,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-	class UAbilitySystemComponent* AbilitySystemComponent;
 
 	void UseSkill(); 
 
@@ -53,7 +49,7 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	//virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 
 	// [1] 사용할 스킬 클래스 (블루프린트에서 GA_Fireball 넣을 변수)

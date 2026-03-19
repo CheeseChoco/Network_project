@@ -26,6 +26,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Skill Setting")
 	FDataTableRowHandle SkillDataHandle;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS")
+	TSubclassOf<class UGameplayEffect> DamageEffectClass;
+
 	// 마우스 방향 계산 함수 (헬퍼)
 	FVector GetDirectionToMouse(APlayerController* PC, FVector StartLocation);
 

@@ -3,19 +3,28 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PaperCharacter.h"
+#include "Character/NPCharacter.h"
 #include "EnemyBase.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class NETWORK_PROJECT_API AEnemyBase : public APaperCharacter
+class NETWORK_PROJECT_API AEnemyBase : public ANPCharacter
 {
 	GENERATED_BODY()
 
 private:
 	virtual void BeginPlay() override;
+
+public:
+	AEnemyBase();
+
+protected:
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	class UAbilitySystemComponent* AbilitySystemComponent;*/
+
+
 	
 public:
 	virtual float TakeDamage(

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GameplayEffectTypes.h"
 #include "NPProjectile.generated.h"
 
 class USphereComponent;
@@ -23,6 +24,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+
 public:	
 
 	// 1. 충돌체 (동그라미 모양)
@@ -34,6 +37,10 @@ public:
 	// 날아가는 속도, 중력, 유도 기능 등을 담당합니다.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
+
+	// [추가] GA에서 넘겨받을 데미지 명세서 (배달통)
+	UPROPERTY(BlueprintReadWrite, Meta = (ExposeOnSpawn = true))
+	FGameplayEffectSpecHandle DamageEffectSpecHandle;
 
 	// 초기 속도 (에디터에서 수정 가능)
 	UPROPERTY(EditAnywhere, Category = "Movement")

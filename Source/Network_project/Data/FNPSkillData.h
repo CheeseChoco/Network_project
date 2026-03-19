@@ -24,6 +24,10 @@ struct FNPSkillData : public FTableRowBase
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category =	"GAS")
+	TSubclassOf<class UGameplayEffect> DamageEffectClass;
+
+public:
 	// [1] 공통 데이터
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	ESkillType SkillType = ESkillType::Projectile;

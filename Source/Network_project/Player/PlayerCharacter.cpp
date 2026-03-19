@@ -39,12 +39,14 @@ APlayerCharacter::APlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true); // 멀티플레이 필수
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed); // 플레이어는 Mixed가 국룰
+	//AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	//AbilitySystemComponent->SetIsReplicated(true); // 멀티플레이 필수
+	//AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed); // 플레이어는 Mixed가 국룰
 
 	// AttributeSet 생성 (나중에 클래스 만들고 주석 해제)
 	// AttributeSet = CreateDefaultSubobject<UMyAttributeSet>(TEXT("AttributeSet"));
+
+	TeamID = 1;
 
 }
 
@@ -68,11 +70,6 @@ void APlayerCharacter::BeginPlay()
 		}
 	}
 
-	if (AbilitySystemComponent)
-	{
-		// GAS 초기화: 나(Owner)와 아바타(Avatar)가 누군지 알려줌
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -109,10 +106,10 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 	}
 }
 
-UAbilitySystemComponent* APlayerCharacter::GetAbilitySystemComponent() const
-{
-	return AbilitySystemComponent;
-}
+//UABILITYSYSTEMCOMPONENT* APLAYERCHARACTER::GETABILITYSYSTEMCOMPONENT() CONST
+//{
+//	RETURN ABILITYSYSTEMCOMPONENT;
+//}
 
 void APlayerCharacter::UseSkill()
 {
