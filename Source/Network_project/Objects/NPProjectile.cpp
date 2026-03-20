@@ -42,6 +42,8 @@ void ANPProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 
+	UE_LOG(LogTemp, Error, TEXT("Projectile Begin"));
+
 	// 3초 뒤 자동 소멸 (메모리 누수 방지)
 	SetLifeSpan(3.0f);
 }

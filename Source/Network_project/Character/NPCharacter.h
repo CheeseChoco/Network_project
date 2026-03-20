@@ -8,6 +8,9 @@
 #include "GenericTeamAgentInterface.h"
 #include "NPCharacter.generated.h"
 
+class UNPAttributeSet;
+class FOnAttributeChangeData;
+
 
 UCLASS()
 class NETWORK_PROJECT_API ANPCharacter : public APaperCharacter, public IAbilitySystemInterface, public IGenericTeamAgentInterface
@@ -21,6 +24,9 @@ public:
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	// [Team] 내 팀 명찰을 심판에게 보여주는 필수 인터페이스
 	virtual FGenericTeamId GetGenericTeamId() const override;
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void Die();
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -29,9 +35,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	class UAbilitySystemComponent* AbilitySystemComponent;
 
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	UNPAttributeSet* AttributeSet;
-	*/
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Team")
 	uint8 TeamID = 255;
