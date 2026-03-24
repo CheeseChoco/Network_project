@@ -85,7 +85,7 @@ void ANPProjectile::NotifyActorBeginOverlap(AActor* OtherActor)
 		if (TargetASC && HasAuthority() && DamageEffectSpecHandle.IsValid())
 		{
 			// 5. [GAS 정석] 데미지 명세서를 적에게 적용 (체력 깎기)
-			TargetASC->ApplyGameplayEffectSpecToTarget(*DamageEffectSpecHandle.Data.Get(), TargetASC);
+			TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
 
 			UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *OtherActor->GetName());
 		}

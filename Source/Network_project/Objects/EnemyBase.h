@@ -21,18 +21,10 @@ public:
 	AEnemyBase();
 
 protected:
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
-	class UAbilitySystemComponent* AbilitySystemComponent;*/
 
 
 	
 public:
-	virtual float TakeDamage(
-		float DamageAmount,
-		struct FDamageEvent const& DamageEvent,
-		class AController* EventInstigator,
-		class AActor* DamageCauser
-	) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float MaxHealth = 100.0f;

@@ -9,7 +9,7 @@
 #include "NPCharacter.generated.h"
 
 class UNPAttributeSet;
-class FOnAttributeChangeData;
+struct FOnAttributeChangeData;
 
 
 UCLASS()
