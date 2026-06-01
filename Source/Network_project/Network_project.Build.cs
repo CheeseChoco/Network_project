@@ -17,7 +17,9 @@ public class Network_project : ModuleRules
 			"GameplayAbilities", 
 			"GameplayTags", 
 			"GameplayTasks", 
-			"AIModule"});
+			"AIModule",
+			"ReplicationGraph"
+		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 

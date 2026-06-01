@@ -40,11 +40,12 @@ void ANPCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 	float newHealth = Data.NewValue;
 	float oldHealth = Data.OldValue;
 
-	UE_LOG(LogTemp, Warning, TEXT("Ouch! HP changed from %f to %f"), oldHealth, newHealth);
+	UE_LOG(LogTemp, Warning, TEXT("Ouch!!!! HP changed from %f to %f"), oldHealth, newHealth);
 
 	// 3. 체력이 0보다 컸는데, 방금 데미지를 입고 0 이하가 된 경우에만 Die 호출
-	if (oldHealth > 0.0f && newHealth <= 0.0f)
+	if (newHealth <= 0.0f)
 	{
+		UE_LOG(LogTemp, Log, TEXT("has died."));
 		Die();
 	}
 }

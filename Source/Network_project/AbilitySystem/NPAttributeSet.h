@@ -40,6 +40,12 @@ public:
 	// 유틸리티: 월드 정보 가져오기 (Lyra 스타일)
 	virtual UWorld* GetWorld() const override;
 
+	//데미지를 받기 위한 변수
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Meta")
+	FGameplayAttributeData Damage;
+	ATTRIBUTE_ACCESSORS(UNPAttributeSet, Damage);
+
+
 	// -------------------------------------------------------------------
 	//	Stats (스탯 정의)
 	// -------------------------------------------------------------------
@@ -72,5 +78,10 @@ protected:
 
 	UFUNCTION()
 	virtual void OnRep_AttackPower(const FGameplayAttributeData& OldAttackPower);
+
+
+public:
+
+	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 };

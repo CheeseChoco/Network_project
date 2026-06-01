@@ -27,7 +27,7 @@ void UNPGameplayAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle 
 	// 2. 데이터 테이블 읽기 (연결의 핵심!)
 	// "Context"는 에러 로그에 찍힐 식별자입니다.
 	FNPSkillData* SkillData = SkillDataHandle.GetRow<FNPSkillData>(TEXT("Skill Ability Context"));
-
+	checkf(SkillData, TEXT("SkillData Null"));
 	if (!SkillData)
 	{
 		UE_LOG(LogTemp, Error, TEXT("데이터 테이블이 비어있거나, Row Name이 잘못되었습니다!"));
@@ -53,12 +53,14 @@ void UNPGameplayAbility_Skill::ActivateAbility(const FGameplayAbilitySpecHandle 
 			if (HasAuthority(&ActivationInfo))
 			{
 				FGameplayEffectSpecHandle DamageSpecHandle;
+				checkf(SkillData->DamageEffectClass, TEXT("GE Null"));
 				if (SkillData->DamageEffectClass)
 				{
 					// 내 능력(Ability)을 기반으로 GE 클래스에서 명세서를 찍어냅니다.
 					DamageSpecHandle = MakeOutgoingGameplayEffectSpec(SkillData->DamageEffectClass, GetAbilityLevel());
 
 					FGameplayTag DamageTag = FGameplayTag::RequestGameplayTag(FName("Data.Damage"));
+					checkf(DamageTag.IsValid(), TEXT("Tag Null"));
 
 					if (DamageSpecHandle.IsValid())
 					{

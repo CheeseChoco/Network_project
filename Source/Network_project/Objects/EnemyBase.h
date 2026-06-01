@@ -23,12 +23,4 @@ public:
 protected:
 
 
-	
-public:
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float MaxHealth = 100.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
-	float CurrentHealth;
 };

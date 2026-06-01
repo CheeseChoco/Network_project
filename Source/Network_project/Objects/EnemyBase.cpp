@@ -16,8 +16,7 @@ void AEnemyBase::BeginPlay()
 {
     Super::BeginPlay();
 
-    CurrentHealth = MaxHealth;
-
+    checkf(AbilitySystemComponent, TEXT("ASC Null"));
     if (AbilitySystemComponent)
     {
         // 1. 태그 가져오기 (매번 FName으로 찾지 말고 캐싱하는 게 좋지만, 일단 직관적으로 씁니다)
