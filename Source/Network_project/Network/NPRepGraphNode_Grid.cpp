@@ -7,78 +7,98 @@
 
 UNPRepGraphNode_Grid::UNPRepGraphNode_Grid()
 {
-	bRequiresPrepareForReplicationCall = true;
+	// 더 이상 PrepareForReplication(매 프레임 무조건 도는 루프)를 강제로 켤 필요가 없습니다.
+	// bRequiresPrepareForReplicationCall = true; (삭제)
 }
-
-void UNPRepGraphNode_Grid::PrepareForReplication()
-{
-	Super::PrepareForReplication();
-
-	UE_LOG(LogTemp, Warning, TEXT("[GridNode] 업데이트 도는 중... 현재 들고 있는 액터 수: %d"), DynamicReplicatedActors.Num());
-
-	UWorld* World = GetWorld();
-	if (!World) return;
-
-	UNPGridSubsystem* GridSubsystem = World->GetGameInstance()->GetSubsystem<UNPGridSubsystem>();
-	if (!GridSubsystem || GridSubsystem->SharedBuffer.TotalCells == 0) return;
-
-	// [디버그 시각화 생산자(Producer) 로직]
-	TArray<uint8>& BackBuffer = GridSubsystem->SharedBuffer.GetBackBuffer();
-	FMemory::Memzero(BackBuffer.GetData(), BackBuffer.Num() * sizeof(uint8));
-
-	for (int32 Idx = 0; Idx < DynamicReplicatedActors.Num(); ++Idx)
-	{
-		FActorRepListType Actor = DynamicReplicatedActors[Idx];
-		if (!Actor) continue;
-
-		FVector Location = Actor->GetActorLocation();
-		int32 GridX = FMath::FloorToInt(Location.X / GridSubsystem->SharedBuffer.CellSize);
-		int32 GridY = FMath::FloorToInt(Location.Y / GridSubsystem->SharedBuffer.CellSize);
-
-		int32 BufferIndex = GridSubsystem->SharedBuffer.GetIndex(GridX, GridY);
-		if (BufferIndex != INDEX_NONE)
-		{
-			// 액터 1개당 강도 50씩 팍팍 올림! (눈에 확 띄게)
-			BackBuffer[BufferIndex] = FMath::Min(255, BackBuffer[BufferIndex] + 50);
-			UE_LOG(LogTemp, Warning, TEXT("Grid [%d, %d] Intensity: %d"), GridX, GridY, BackBuffer[BufferIndex]);
-		}
-	}
-
-	// 1프레임에 1번만 안전하게 스왑!
-	GridSubsystem->SharedBuffer.SwapBuffers();
-}
-
-void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
-{
-	Params.OutGatheredReplicationLists.AddReplicationActorList(DynamicReplicatedActors);
-}
-
-
-// =========================================================================
-// [추가된 부분] 액터 등록 / 해제 로직
-// =========================================================================
 
 void UNPRepGraphNode_Grid::NotifyAddNetworkActor(const FNewReplicatedActorInfo& ActorInfo)
 {
-	// 액터가 스폰되어 네트워크에 추가되면 우리 관리 리스트에 넣습니다.
-	if (ActorInfo.Actor)
+	// 1. 진짜 내장 2D 노드에게 등록을 맡깁니다. (셀에 액터를 분배하는 내부 로직 실행)
+	Super::NotifyAddNetworkActor(ActorInfo);
+
+	// 2. 비주얼라이저 대조용으로 우리 명부에도 이름을 적어둡니다.
+	/*if (ActorInfo.Actor)
 	{
-		DynamicReplicatedActors.Add(ActorInfo.Actor);
-	}
+		AllTrackedActors.AddUnique(ActorInfo.Actor);
+	}*/
 }
 
 bool UNPRepGraphNode_Grid::NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound)
 {
-	// 액터가 파괴되거나 네트워크에서 제거되면 리스트에서 아주 빠르게 빼줍니다. (RemoveFast 사용)
-	if (ActorInfo.Actor)
+	bool bResult = Super::NotifyRemoveNetworkActor(ActorInfo, bWarnIfNotFound);
+	/*if (ActorInfo.Actor)
 	{
-		return DynamicReplicatedActors.RemoveFast(ActorInfo.Actor);
-	}
-	return false;
+		AllTrackedActors.Remove(ActorInfo.Actor);
+	}*/
+	return bResult;
 }
 
 void UNPRepGraphNode_Grid::NotifyResetAllNetworkActors()
 {
-	// 게임 재시작이나 맵 이동 등으로 초기화가 필요할 때 리스트를 완전히 비웁니다.
-	DynamicReplicatedActors.Reset();
+	Super::NotifyResetAllNetworkActors();
+	//AllTrackedActors.Reset();
+}
+
+void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
+{
+	// =====================================================================
+	// [1. 엔진의 최적화 실행]
+	// 부모 클래스의 진짜 연산을 먼저 실행합니다. 
+	// 이 함수가 끝나면 플레이어와 거리가 가까워서 "통과(Replicated)된" 액터들만 
+	// Params.OutGatheredReplicationLists 바구니에 담기게 됩니다.
+	// =====================================================================
+	Super::GatherActorListsForConnection(Params);
+
+
+	// =====================================================================
+	// [2. 결과 스파이(Spy) 및 추출]
+	// =====================================================================
+	//UWorld* World = GetWorld();
+	//if (!World) return;
+
+	//UNPGridSubsystem* GridSubsystem = World->GetGameInstance()->GetSubsystem<UNPGridSubsystem>();
+	//if (!GridSubsystem) return;
+
+	//// 빠른 검색을 위해 '이번 프레임에 통과한 액터들'을 해시셋(TSet)으로 옮겨 담습니다.
+	//TSet<AActor*> ReplicatedActorsThisFrame;
+
+	//// OutGatheredReplicationLists 내부를 순회합니다. (언리얼 버전에 따라 GetLists() 방식이 쓰입니다)
+	//// 이 리스트에 이름이 있다면, 엔진 2D 노드가 "이 액터는 플레이어에게 전송하라"고 허락한 것입니다.
+	//if (Params.OutGatheredReplicationLists.NumLists() > 0)
+	//{
+	//	for (const FActorRepListConstView& GatheredList : Params.OutGatheredReplicationLists.GetLists(EActorRepListTypeFlags::Default))
+	//	{
+	//		for (AActor* Actor : GatheredList)
+	//		{
+	//			if (Actor) ReplicatedActorsThisFrame.Add(Actor);
+	//		}
+	//	}
+	//}
+
+	//// 3. 서브시스템의 뒷배경 버퍼를 열어서 싹 비웁니다.
+	//TArray<FActorCullInfo>& BackBuffer = GridSubsystem->SharedBuffer.GetBackBuffer();
+	//BackBuffer.Empty();
+
+	//// 4. 맵에 있는 "전체 액터" 명부를 돌면서 성적표(CullInfo)를 작성합니다.
+	//for (AActor* Actor : AllTrackedActors)
+	//{
+	//	if (!Actor) continue;
+
+	//	FActorCullInfo CullInfo;
+	//	CullInfo.ActorName = Actor->GetName();
+	//	CullInfo.Location = Actor->GetActorLocation();
+
+	//	// 이 액터가 요구하는 가시거리 반경 (기본 세팅값 기준)
+	//	// 엔진의 CullDistanceSquared는 제곱값이므로 화면에 원을 그리기 위해 루트(Sqrt)를 씌워줍니다.
+	//	CullInfo.CullDistance = FMath::Sqrt(Actor->GetNetCullDistanceSquared());
+
+	//	// 핵심: 통과 명단(ReplicatedActorsThisFrame)에 내 이름이 있으면 True, 멀어서 짤렸으면 False!
+	//	CullInfo.bIsReplicated = ReplicatedActorsThisFrame.Contains(Actor);
+
+	//	// 서브시스템 버퍼에 밀어 넣습니다.
+	//	BackBuffer.Add(CullInfo);
+	//}
+
+	// 5. 기록이 끝났으니 비주얼라이저가 그림을 그릴 수 있도록 버퍼를 교체(Swap)합니다.
+	//GridSubsystem->SharedBuffer.SwapBuffers();
 }

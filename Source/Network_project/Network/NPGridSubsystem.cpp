@@ -6,12 +6,11 @@
 void UNPGridSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
 	UE_LOG(LogTemp, Log, TEXT("NPGridSubsystem Initialized!"));
 }
 
 void UNPGridSubsystem::Deinitialize()
-{
+{	
 	// TArray는 자동으로 메모리가 해제되므로 별도의 처리가 필요 없습니다.
 	Super::Deinitialize();
 
@@ -25,4 +24,10 @@ void UNPGridSubsystem::InitGridSystem(float WorldWidth, float WorldHeight, float
 
 	UE_LOG(LogTemp, Warning, TEXT("Grid System Setup Complete: %d x %d (Total Cells: %d, CellSize: %f)"),
 		SharedBuffer.GridWidth, SharedBuffer.GridHeight, SharedBuffer.TotalCells, CellSize);
+}
+
+TArray<FActorCullInfo> UNPGridSubsystem::GetCurrentCullInfoList() const
+{
+	// 락 없이 안전하게 전면 버퍼(FrontBuffer)의 데이터를 복사하여 반환
+	return SharedBuffer.GetFrontBuffer();
 }

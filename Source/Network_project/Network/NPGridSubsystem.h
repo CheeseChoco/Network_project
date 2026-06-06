@@ -7,47 +7,53 @@
 #include "Templates/Atomic.h"
 #include "NPGridSubsystem.generated.h"
 
-/**
- * 
- */
+
+USTRUCT(BlueprintType)
+struct FActorCullInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Visualizer")
+	FVector Location = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Visualizer")
+	float CullDistance = 0.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Visualizer")
+	bool bIsReplicated = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Visualizer")
+	FString ActorName;
+};
+
+
 struct FGridDoubleBuffer {
-	float CellSize = 1000.0f; //한 칸의 크기(정사각형)
-	int32 GridWidth = 0; //그리드의 가로 개수
-	int32 GridHeight = 0; //그리드의 세로 개수
-	int32 TotalCells = 0; //총 그리드 개수
+	float CellSize = 1000.0f; // 한 칸의 크기
+	int32 GridWidth = 0;      // 가로 격자 개수
+	int32 GridHeight = 0;     // 세로 격자 개수
+	int32 TotalCells = 0;     // 총 격자 개수
 
-	//더블 버퍼링 용도
-	TArray<uint8> Buffer0;
-	TArray<uint8> Buffer1;
+	// 더블 버퍼링 용도 (고정 크기 타일 배열에서 가변 액터 정보 배열로 변경)
+	TArray<FActorCullInfo> Buffer0;
+	TArray<FActorCullInfo> Buffer1;
 
-	//아토믹
+	// 아토믹 버퍼 스왑 인덱스
 	TAtomic<int32> ActiveBufferIndex{ 0 };
 
-	// 그리드 변수 초기화 용
+	// 그리드 크기 및 기본 변수 초기화
 	void Init(float InWorldWidth, float InWorldHeight, float InCellSize)
 	{
 		CellSize = InCellSize;
-
-		//그리드 초기화
 		GridWidth = FMath::CeilToInt(InWorldWidth / CellSize);
 		GridHeight = FMath::CeilToInt(InWorldHeight / CellSize);
 		TotalCells = GridWidth * GridHeight;
 
-		// 버퍼 초기화
-		Buffer0.SetNumZeroed(TotalCells);
-		Buffer1.SetNumZeroed(TotalCells);
+		Buffer0.Empty();
+		Buffer1.Empty();
 	}
 
-	//2D 좌표 -> 그리드 좌표
-	int32 GetIndex(int32 X, int32 Y) const
-	{
-		// 범위를 벗어나는 접근 차단
-		if (X < 0 || X >= GridWidth || Y < 0 || Y >= GridHeight) return INDEX_NONE;
-		return (Y * GridWidth) + X;
-	}
-
-	//기록용 뒷 버퍼 호출
-	TArray<uint8>& GetBackBuffer()
+	// 기록용 뒷 버퍼 호출
+	TArray<FActorCullInfo>& GetBackBuffer()
 	{
 		return (ActiveBufferIndex.Load(EMemoryOrder::SequentiallyConsistent) == 0) ? Buffer1 : Buffer0;
 	}
@@ -60,8 +66,8 @@ struct FGridDoubleBuffer {
 		ActiveBufferIndex.Store(NewActive, EMemoryOrder::SequentiallyConsistent);
 	}
 
-	//읽기용 앞 버퍼 호출
-	const TArray<uint8>& GetFrontBuffer() const
+	// 읽기용 앞 버퍼 호출
+	const TArray<FActorCullInfo>& GetFrontBuffer() const
 	{
 		return (ActiveBufferIndex.Load(EMemoryOrder::SequentiallyConsistent) == 0) ? Buffer0 : Buffer1;
 	}
@@ -74,17 +80,17 @@ class NETWORK_PROJECT_API UNPGridSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
-	// 서브시스템 생성 시 자동으로 호출
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
-	// 서브시스템 소멸 시 자동으로 호출
 	virtual void Deinitialize() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Visualizer")
+	void InitGridSystem(float WorldWidth, float WorldHeight, float CellSize = 3000.0f);
 
 	// -------------------------------------------------------------------------
 	// 외부(게임모드나 리플리케이션 그래프)에서 호출하여 그리드를 최초 세팅하는 함수
 	// -------------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable, Category = "Visualizer")
-	void InitGridSystem(float WorldWidth, float WorldHeight, float CellSize = 3000.0f);
+	TArray<FActorCullInfo> GetCurrentCullInfoList() const;
 
 	// 위에서 정의한 더블 버퍼 구조체의 실제 인스턴스
 	FGridDoubleBuffer SharedBuffer;

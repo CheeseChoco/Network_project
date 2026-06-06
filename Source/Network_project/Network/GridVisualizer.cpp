@@ -13,14 +13,14 @@ void AGridVisualizer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 1. 시각화 액터가 태어날 때 서브시스템을 초기화해줍니다.
-	// (실제 프로젝트에서는 맵의 전체 넓이(예: 30000x30000)를 계산해서 넣어주면 좋습니다.)
 	if (UGameInstance* GameInstance = GetGameInstance())
 	{
 		if (UNPGridSubsystem* GridSubsystem = GameInstance->GetSubsystem<UNPGridSubsystem>())
 		{
-			// 예시: 가로 30000, 세로 30000 크기의 월드를 기준으로 버퍼 메모리 사전 할당
-			GridSubsystem->InitGridSystem(30000.0f, 30000.0f, GridCellSize);
+			// [수정됨] 거대한 2D 배열을 메모리에 할당하던 과거 로직 탈피.
+			// 이제 이 값(10000x10000)은 메모리 할당이 아니라, 오직 "바닥에 디버그 격자선을 그릴 때 사용할 범위"로만 쓰입니다.
+			// 버퍼 자체는 동적(Empty 상태)으로 안전하게 초기화됩니다.
+			GridSubsystem->InitGridSystem(10000.0f, 10000.0f, GridCellSize);
 		}
 	}
 }
@@ -52,43 +52,51 @@ void AGridVisualizer::Tick(float DeltaTime)
 	if (!GameInstance) return;
 
 	UNPGridSubsystem* GridSubsystem = GameInstance->GetSubsystem<UNPGridSubsystem>();
-	if (!GridSubsystem || GridSubsystem->SharedBuffer.TotalCells == 0) return;
+	if (!GridSubsystem) return;
 
-	// 1. 락(Lock) 없이 안전하게 앞배경 읽어오기
-	const TArray<uint8>& FrontBuffer = GridSubsystem->SharedBuffer.GetFrontBuffer();
+	// =========================================================
+	// 1. 서브시스템에서 안전하게 현재 프레임의 액터 상태 리스트 스냅샷 복사
+	// =========================================================
+	TArray<FActorCullInfo> CurrentActorStates = GridSubsystem->GetCurrentCullInfoList();
 
-	int32 Width = GridSubsystem->SharedBuffer.GridWidth;
-	int32 Height = GridSubsystem->SharedBuffer.GridHeight;
-	float MarginScale = 0.99f;
-	FVector BoxExtent((GridCellSize / 2.0f) * MarginScale, (GridCellSize / 2.0f) * MarginScale, 10.0f);
-
-	// 2. 전체 그리드를 순회하며 활성화된 구역만 그리기
-	for (int32 Y = 0; Y < Height; ++Y)
+	// =========================================================
+	// 2. 수집된 액터 상태들을 순회하며 디버그 렌더링
+	// =========================================================
+	for (const FActorCullInfo& Info : CurrentActorStates)
 	{
-		for (int32 X = 0; X < Width; ++X)
-		{
-			int32 Index = GridSubsystem->SharedBuffer.GetIndex(X, Y);
-			if (Index == INDEX_NONE) continue;
+		// [핵심] 통과 여부에 따른 색상 결정 (Replicated = 초록색, Culled = 빨간색)
+		FColor DrawColor = Info.bIsReplicated ? FColor::Green : FColor::Red;
 
-			uint8 Intensity = FrontBuffer[Index];
+		// 3D 공간의 Z 높이 보정 (땅바닥에 붙여서 그리기 위함)
+		FVector CenterLocation = Info.Location;
+		CenterLocation.Z = DrawZHeight;
 
-			// 강도가 0보다 클 때만 (즉, 이 칸에 액터가 존재하거나 갱신되었을 때만) 박스 그리기
-			if (Intensity > 0)
-			{
-				// 1. 그라데이션을 위한 Alpha 값 계산 (0.0 ~ 1.0)
-				float Alpha = FMath::Clamp(Intensity / 255.0f, 0.0f, 1.0f);
+		// 액터 위치에 가시거리(CullDistance) 크기의 원(Circle)을 그립니다.
+		DrawDebugCircle(
+			GetWorld(),
+			CenterLocation,
+			Info.CullDistance,      // 반지름 (데이터 테이블/전역 세팅에서 지정한 거리)
+			36,                     // 원을 구성하는 선분 개수 (클수록 부드러움)
+			DrawColor,              // 색상
+			false,                  // 유지 여부 (매 프레임 그리므로 false)
+			-1.0f,                  // 유지 시간
+			0,                      // 우선순위
+			5.0f,                   // 선 두께 (눈에 잘 띄게 5.0f)
+			FVector(0, 1, 0),       // Y축 벡터 (XY 평면에 눕혀서 그리기 위한 방향 설정)
+			FVector(1, 0, 0),       // X축 벡터
+			false                   // 축(Axis) 라인 그리기 여부
+		);
 
-				// 2. [수정됨] 실수형인 FLinearColor를 사용하여 부드럽게 색상 보간(Lerp)
-				FLinearColor LerpedColor = FMath::Lerp(FLinearColor::Yellow, FLinearColor::Red, Alpha);
-
-				// 3. DrawDebugBox에 넣기 위해 다시 FColor로 변환 (true는 sRGB 변환 적용 여부)
-				FColor DrawColor = LerpedColor.ToFColor(true);
-
-				FVector BoxCenter = GridIndexToWorldCenter(FIntPoint(X, Y));
-
-				// 디버그 박스 그리기
-				DrawDebugBox(GetWorld(), BoxCenter, BoxExtent, FQuat::Identity, DrawColor, false, 0.1f, 0, 10.0f);
-			}
-		}
+		// [선택 사항] 몬스터 머리 위에 이름표와 가시거리 수치를 텍스트로 띄워주면 디버깅이 더 편합니다.
+		FString StatusText = FString::Printf(TEXT("%s\nDist: %.0f"), *Info.ActorName, Info.CullDistance);
+		DrawDebugString(GetWorld(), Info.Location + FVector(0, 0, 100.0f), StatusText, nullptr, DrawColor, 0.0f, false, 1.2f);
 	}
+
+	// =========================================================
+	// 3. (옵션) 맵 전체의 2D 공간 분할 격자선(Grid) 렌더링
+	// =========================================================
+	/*
+	// 엔진이 실제로 공간을 어떻게 쪼개고 있는지 눈으로 보고 싶다면,
+	// GridSubsystem->SharedBuffer.GridWidth 등을 활용하여 DrawDebugLine으로 바둑판을 그리는 로직을 이곳에 추가할 수 있습니다.
+	*/
 }

@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class NETWORK_PROJECT_API UNPRepGraphNode_Grid : public UReplicationGraphNode
+class NETWORK_PROJECT_API UNPRepGraphNode_Grid : public UReplicationGraphNode_GridSpatialization2D
 {
 	GENERATED_BODY()
 	
@@ -18,7 +18,6 @@ public:
 	UNPRepGraphNode_Grid();
 
 	// 리플리케이션 업데이트 루프의 핵심 함수
-	virtual void PrepareForReplication() override;
 	virtual void GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params) override;
 
 	virtual void NotifyAddNetworkActor(const FNewReplicatedActorInfo& ActorInfo) override;
@@ -27,9 +26,8 @@ public:
 
 
 protected:
-	// 이 노드에서 관리할 동적 액터들의 리스트 (기본적인 1D 배열 형태)
-	// 실제 공간 분할 최적화를 하려면 2D 배열 형태의 컨테이너를 써야 하지만, 
-	// 여기서는 시각화 로직에 집중하기 위해 기본 리스트를 순회한다고 가정합니다.
-	FActorRepListRefView DynamicReplicatedActors;
+	// 시각화를 위해 '현재 맵에 존재하는 전체 동적 액터'를 추적하는 명부
+	// 엔진 내장 노드에도 리스트가 있지만 보호(Protected)되어 있어 접근이 까다로우므로 우리가 직접 하나 들고 있습니다.
+	TArray<AActor*> AllTrackedActors;
 
 };
