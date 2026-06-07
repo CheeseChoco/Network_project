@@ -30,7 +30,7 @@ APlayerCharacter::APlayerCharacter()
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 1800.0f; // 카메라 거리
+	CameraBoom->TargetArmLength = 3000.0f; // 카메라 거리
 	CameraBoom->SetRelativeRotation(FRotator(-90.0f, 0.0f, 180.0f)); // 위에서 아래로 직각으로 내려다봄
 	CameraBoom->bDoCollisionTest = false; // 카메라가 벽에 닿아도 줌인되지 않게
 

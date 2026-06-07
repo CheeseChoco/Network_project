@@ -6,6 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "GridVisualizer.generated.h"
 
+struct FNPGridVisualData
+{
+	float CellSize;
+	FVector2D SpatialBias;
+	TArray<FIntPoint> ActiveCells; // 현재 사용 중인 방 번호들
+};
+
+
 UCLASS()
 class NETWORK_PROJECT_API AGridVisualizer : public AActor
 {

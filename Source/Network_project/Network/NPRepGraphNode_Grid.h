@@ -24,7 +24,8 @@ public:
 	virtual bool NotifyRemoveNetworkActor(const FNewReplicatedActorInfo& ActorInfo, bool bWarnIfNotFound = true) override;
 	virtual void NotifyResetAllNetworkActors() override;
 
-
+	//디버깅용 Getter
+	void GetGridDimensions(float& OutCellSize, FVector2D& OutBias) const;
 protected:
 	// 시각화를 위해 '현재 맵에 존재하는 전체 동적 액터'를 추적하는 명부
 	// 엔진 내장 노드에도 리스트가 있지만 보호(Protected)되어 있어 접근이 까다로우므로 우리가 직접 하나 들고 있습니다.

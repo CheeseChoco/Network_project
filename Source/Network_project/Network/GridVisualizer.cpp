@@ -2,6 +2,7 @@
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
 #include "NPGridSubsystem.h" // 서브시스템 헤더 포함
+#include "NPRepGraphNode_Grid.h"
 
 AGridVisualizer::AGridVisualizer()
 {
@@ -23,6 +24,8 @@ void AGridVisualizer::BeginPlay()
 			GridSubsystem->InitGridSystem(10000.0f, 10000.0f, GridCellSize);
 		}
 	}
+
+	
 }
 
 bool AGridVisualizer::ShouldTickIfViewportsOnly() const

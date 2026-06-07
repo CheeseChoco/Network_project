@@ -8,13 +8,11 @@
 UNPRepGraphNode_Grid::UNPRepGraphNode_Grid()
 {
 	// 더 이상 PrepareForReplication(매 프레임 무조건 도는 루프)를 강제로 켤 필요가 없습니다.
-	// bRequiresPrepareForReplicationCall = true; (삭제)
+	bRequiresPrepareForReplicationCall = true;
 }
 
 void UNPRepGraphNode_Grid::NotifyAddNetworkActor(const FNewReplicatedActorInfo& ActorInfo)
 {
-	// 1. 진짜 내장 2D 노드에게 등록을 맡깁니다. (셀에 액터를 분배하는 내부 로직 실행)
-	Super::NotifyAddNetworkActor(ActorInfo);
 
 	// 2. 비주얼라이저 대조용으로 우리 명부에도 이름을 적어둡니다.
 	/*if (ActorInfo.Actor)
@@ -48,7 +46,6 @@ void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGather
 	// Params.OutGatheredReplicationLists 바구니에 담기게 됩니다.
 	// =====================================================================
 	Super::GatherActorListsForConnection(Params);
-
 
 	// =====================================================================
 	// [2. 결과 스파이(Spy) 및 추출]
@@ -101,4 +98,11 @@ void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGather
 
 	// 5. 기록이 끝났으니 비주얼라이저가 그림을 그릴 수 있도록 버퍼를 교체(Swap)합니다.
 	//GridSubsystem->SharedBuffer.SwapBuffers();
+}
+
+
+void UNPRepGraphNode_Grid::GetGridDimensions(float& OutCellSize, FVector2D& OutBias) const
+{
+	OutCellSize = CellSize;
+	OutBias = SpatialBias;
 }

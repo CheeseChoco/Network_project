@@ -78,7 +78,7 @@ void UNPReplicationGraph::InitGlobalGraphNodes()
 
 	GridNode = CreateNewNode<UNPRepGraphNode_Grid>();
 	GridNode->CellSize = 1000.0f;
-	GridNode->SpatialBias = FVector2D(-15000.0f, -15000.0f);
+	GridNode->SpatialBias = FVector2D(-UE_OLD_WORLD_MAX, -UE_OLD_WORLD_MAX);
 	AddGlobalGraphNode(GridNode);
 
 	AlwaysRelevantNode = CreateNewNode<UReplicationGraphNode_ActorList>();
@@ -101,6 +101,11 @@ void UNPReplicationGraph::InitConnectionGraphNodes(UNetReplicationGraphConnectio
 //액터 노드에 추가하기
 void UNPReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicatedActorInfo& ActorInfo, FGlobalActorReplicationInfo& GlobalInfo)
 {
+	if (ActorInfo.Actor->GetName().Contains(TEXT("EnemyBase")))
+	{
+		float GraphCullSq = GlobalInfo.Settings.GetCullDistanceSquared();
+		UE_LOG(LogTemp, Error, TEXT("[DEBUG-1] EnemyBase Add Distance: %f"), GraphCullSq);
+	}
 	AActor* Actor = ActorInfo.GetActor();
 	if (!Actor) return;
 
@@ -114,16 +119,23 @@ void UNPReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicatedActorI
 	}
 	else
 	{
-		// Note that UReplicationGraphNode_GridSpatialization2D has 3 methods for adding actor based on the mobility of the actor. Since AActor lacks this information, we will
-		// add all spatialized actors as dormant actors: meaning they will be treated as possibly dynamic (moving) when not dormant, and as static (not moving) when dormant.
-		GridNode->AddActor_Dormancy(ActorInfo, GlobalInfo);
+		// [수정] 이동하는 액터(플레이어, 몬스터 등 APawn 클래스)는 Dynamic으로 등록하여 위치 갱신을 받게 합니다.
+		if (Actor->IsA<APawn>())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Dynamic : %s"), *ActorInfo.GetActor()->GetName());
+			GridNode->AddActor_Dynamic(ActorInfo, GlobalInfo);
+		}
+		else
+		{
+			// 드랍된 아이템 등 정지된 물체만 Dormancy로 처리합니다.
+			GridNode->AddActor_Dormancy(ActorInfo, GlobalInfo);
+		}
 	}
 }
 //액터 노드에서 지우기
 void UNPReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplicatedActorInfo& ActorInfo)
 {
-	Super::RouteRemoveNetworkActorToNodes(ActorInfo);
-
+	
 	if (ActorInfo.Actor->bAlwaysRelevant)
 	{
 		AlwaysRelevantNode->NotifyRemoveNetworkActor(ActorInfo);
