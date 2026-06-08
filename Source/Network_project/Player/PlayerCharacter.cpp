@@ -49,8 +49,6 @@ APlayerCharacter::APlayerCharacter()
 	TeamID = 1;
 
 
-	bReplicates = true;
-	SetNetCullDistanceSquared(FMath::Square(1500.0f));
 
 }
 

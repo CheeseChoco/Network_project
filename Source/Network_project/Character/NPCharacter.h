@@ -42,4 +42,7 @@ protected:
 	uint8 TeamID = 255;
 
 
+	void OptimizeClientPerformance();
+
+	FTimerHandle OptimizationTimerHandle;
 };

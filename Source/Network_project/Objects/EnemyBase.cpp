@@ -11,8 +11,6 @@ AEnemyBase::AEnemyBase()
     // [팀 규정] 적군은 태어날 때부터 2팀으로 규정합니다.
     TeamID = 2;
 
-    bReplicates = true;
-    SetNetCullDistanceSquared(FMath::Square(1000.0f));
 }
 
 void AEnemyBase::BeginPlay()

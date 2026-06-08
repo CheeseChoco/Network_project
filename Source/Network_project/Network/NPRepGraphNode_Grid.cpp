@@ -100,9 +100,3 @@ void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGather
 	//GridSubsystem->SharedBuffer.SwapBuffers();
 }
 
-
-void UNPRepGraphNode_Grid::GetGridDimensions(float& OutCellSize, FVector2D& OutBias) const
-{
-	OutCellSize = CellSize;
-	OutBias = SpatialBias;
-}
