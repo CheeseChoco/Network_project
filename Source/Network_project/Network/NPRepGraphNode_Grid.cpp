@@ -37,6 +37,7 @@ void UNPRepGraphNode_Grid::NotifyResetAllNetworkActors()
 	//AllTrackedActors.Reset();
 }
 
+// 각 클라이언트의 프레임 마다 실행되는 최적화용 함수
 void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
 {
 	// =====================================================================
@@ -46,6 +47,89 @@ void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGather
 	// Params.OutGatheredReplicationLists 바구니에 담기게 됩니다.
 	// =====================================================================
 	Super::GatherActorListsForConnection(Params);
+
+	//for문 대신 예외처리로 안전장치
+	if (Params.Viewers.Num() == 0)
+	{
+		return;
+	}
+
+	const FVector ViewerLocation = Params.Viewers[0].ViewLocation;
+
+	const uint32 CurrentTick = Params.ConnectionManager.ConnectionOrderNum;
+
+	FActorRepListRefView FilteredList = Params.ConnectionManager.AllocateRepList();
+
+	// =====================================================================
+	// [3. 명단 순회 및 거리 기반 주파수 커팅]
+	// =====================================================================
+	// 부모가 작성한 명단이 비어있지 않다면 순회를 시작합니다.
+	if (Params.OutGatheredReplicationLists.NumLists() > 0)
+	{
+		for (const FActorRepListConstView& GatheredList : Params.OutGatheredReplicationLists.GetLists(EActorRepListTypeFlags::Default))
+		{
+			for (AActor* Actor : GatheredList)
+			{
+				if (!Actor) continue;
+
+				// 플레이어와 액터 사이의 거리 제곱 (루트 연산을 피하기 위한 Sqaured 사용)
+				float DistSq = FVector::DistSquaredXY(ViewerLocation, Actor->GetActorLocation());
+				bool bPassFilter = true;
+
+				// [핵심] 티어(Tier)별 프레임 스킵 로직
+				if (DistSq > FMath::Square(3000.f))
+				{
+					// Tier 3 (원거리): 15틱 중 1틱만 통과 (나머지 14틱은 bPassFilter가 false가 됨)
+					if (CurrentTick % 15 != 0) bPassFilter = false;
+				}
+				else if (DistSq > FMath::Square(1500.f))
+				{
+					// Tier 2 (중거리): 5틱 중 1틱만 통과
+					if (CurrentTick % 5 != 0) bPassFilter = false;
+				}
+				// Tier 1 (근거리): 1500 미만은 무조건 true를 유지하여 매 틱 전송
+
+				// 필터를 통과한 '찐' 액터들만 우리의 새 장부에 적습니다.
+				if (bPassFilter)
+				{
+					FilteredList.Add(Actor);
+				}
+			}
+		}
+
+		// =====================================================================
+	// [4. 원본 명단 덮어씌우기]
+	// =====================================================================
+	// 부모가 채워둔 원본 바구니를 싹 비우고, 우리의 엄격한 필터를 통과한 새 바구니로 교체합니다.
+		Params.OutGatheredReplicationLists.Reset();
+
+		if (FilteredList.Num() > 0)
+		{
+			Params.OutGatheredReplicationLists.AddList(FilteredList);
+		}
+
+		// (이후 과정인 GridSubsystem 시각화 버퍼 전송 로직은 이 아래에 이어서 작성하시면 됩니다.)
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	// =====================================================================
 	// [2. 결과 스파이(Spy) 및 추출]
