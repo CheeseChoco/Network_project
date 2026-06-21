@@ -31,7 +31,12 @@ void AGridVisualizer::BeginPlay()
 	{
 		// 1초마다 DrawReplicationGrid 함수를 반복 실행합니다. 
 		// (DrawDebugBox의 LifeTime을 1초로 두었기 때문에 깜빡임 없이 유지됩니다)
-		GetWorld()->GetTimerManager().SetTimer(DrawTimerHandle, this, &AGridVisualizer::DrawCellGrid, 1.0f, true);
+		GetWorld()->GetTimerManager().SetTimer(DrawTimerHandle, this, &AGridVisualizer::DrawCellGrid, 0.5f, true);
+		
+		// 2. [추가됨] 플레이어를 따라다니는 뷰포트 직사각형은 0.05초(20fps)마다 부드럽게 렌더링
+		GetWorld()->GetTimerManager().SetTimer(ViewportTimerHandle, this, &AGridVisualizer::DrawViewportAABB, 0.05f, true);
+
+		
 	}
 }
 
@@ -89,7 +94,45 @@ void AGridVisualizer::DrawCellGrid()
 
 
 
+// =========================================================================
+// [추가됨] 랩그래프 내부의 LogicalViewportAABB와 동일한 직사각형을 렌더링합니다.
+// =========================================================================
+void AGridVisualizer::DrawViewportAABB()
+{
+	if (!GetWorld()) return;
 
+	// 1. 현재 로컬 플레이어 컨트롤러를 가져옵니다.
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC) return;
+
+	// 2. 플레이어가 조종 중인 캐릭터(Pawn)의 위치를 추출합니다.
+	APawn* Pawn = PC->GetPawn();
+	if (!Pawn) return;
+
+	// 3. 랩그래프 노드와 완벽히 동일한 기준점 및 크기 설정
+	FVector Center = Pawn->GetActorLocation();
+	Center.Z = 10.0f; // 격자와 겹치지 않게 바닥에서 살짝 띄웁니다.
+
+	// 우리가 랩그래프에서 설정했던 Extent 수치 (1600, 900)
+	const float ViewExtentX = 900.f;
+	const float ViewExtentY = 1600.f;
+
+	// DrawDebugBox는 Extent(절반 크기)를 받으므로 그대로 넣어줍니다. 두께는 임의로 5.0f 지정
+	FVector Extent(ViewExtentX / 2, ViewExtentY / 2, 5.0f);
+
+	// 4. 눈에 확 띄는 색상(파란색)으로 뷰포트를 그립니다.
+	DrawDebugBox(
+		GetWorld(),
+		Center,
+		Extent,
+		FQuat::Identity,
+		FColor::Blue, // 격자(검은색)와 대비되는 색상
+		false,
+		0.06f,        // 타이머 주기(0.05f)보다 아주 살짝 길게 유지하여 깜빡임 방지
+		0,
+		15.0f         // 선 두께
+	);
+}
 
 
 

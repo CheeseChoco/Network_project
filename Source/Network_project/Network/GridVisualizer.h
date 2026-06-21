@@ -19,6 +19,10 @@ protected:
 	/*virtual void Tick(float DeltaTime) override;
 	virtual bool ShouldTickIfViewportsOnly() const override;*/
 
+	// [추가됨] 뷰포트 그리기 전용 함수 및 타이머
+	void DrawViewportAABB();
+	FTimerHandle ViewportTimerHandle;
+
 public:	
 	// Called every frame
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid System")

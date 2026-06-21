@@ -32,4 +32,30 @@ protected:
 	// 엔진 내장 노드에도 리스트가 있지만 보호(Protected)되어 있어 접근이 까다로우므로 우리가 직접 하나 들고 있습니다.
 	TArray<AActor*> AllTrackedActors;
 
+	struct FNPSortedActorItem
+	{
+		FNPSortedActorItem(){ }
+		FNPSortedActorItem(AActor* InActor, int32 InDistance, FGlobalActorReplicationInfo* InGlobal)
+			: Actor(InActor), FramesTillReplicate(InDistance), GlobalInfo(InGlobal) {
+		}
+
+		AActor* Actor = nullptr;
+		// 초반엔 거리 용도로 쓰다가 나중에 프레임으로 사용 주의
+		int32 FramesTillReplicate = 0;
+		FGlobalActorReplicationInfo* GlobalInfo = nullptr;
+		FConnectionReplicationActorInfo* ConnectionInfo = nullptr;
+
+
+		// 거리가 가까운 순서(오름차순)로 정렬하기 위한 연산자 오버로딩
+		bool operator<(const FNPSortedActorItem& Other) const
+		{
+			return FramesTillReplicate < Other.FramesTillReplicate;
+		}
+	};
+
+	TArray<FNPSortedActorItem>	SortedReplicationList;
+
+	int32 NumExpectedReplicationsThisFrame = 0;
+	int32 NumExpectedReplicationsNextFrame = 0;
+
 };
