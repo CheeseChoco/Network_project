@@ -92,7 +92,7 @@ void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGather
 	);
 
 	//UReplicationGraphNode_DynamicSpatialFrequency의 TwoPass 따라하기
-	const int32 MaxNearestActors = 200;
+	const int32 MaxNearestActors = 2;
 
 	// 2. 수집 및 주기 판정 후 정렬 배열 초기화로 변경
 	SortedReplicationList.Reset();
@@ -145,14 +145,14 @@ void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGather
 // =====================================================================
 // [Phase 4] 대역폭 캡 및 직접 전송 (API Replicate)
 // =====================================================================
-	const int64 MaxBitsThisFrame = 40000;
+	//const int64 MaxBitsThisFrame = 40000;
 	int64 BitsWritten = 0;
 
 	for (FNPSortedActorItem& Item : SortedReplicationList)
 	{
 		// 우선순위 정렬 덕분에, 전송 대상이 아닌 액터가 나오면 그 뒤는 안 봐도 됨
 		if (Item.FramesTillReplicate > 0) break;
-		if (BitsWritten > MaxBitsThisFrame) break;
+		//if (BitsWritten > MaxBitsThisFrame) break;
 
 		// [발사] 직접 직렬화 및 전송
 		BitsWritten += RepGraph->ReplicateSingleActor(
