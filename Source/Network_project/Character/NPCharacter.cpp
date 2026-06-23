@@ -89,45 +89,37 @@ void ANPCharacter::OptimizeClientPerformance()
 	FString StateName = TEXT("");
 	FColor DebugColor = FColor::White;
 
-	// 1. 활성화 구역 (10m 이내)
-	if (Dist2D <= 1000.0f)
+	// 1. 기준점: 현재 내 화면을 보고 있는 로컬 플레이어의 위치
+	FVector LogicalCenter = LocalPC->GetPawn()->GetActorLocation();
+
+	// 2. 서버 랩그래프와 완벽히 동일한 AABB 규격 생성 (앞뒤 900, 좌우 1600)
+	const float ViewExtentX = 900.f;
+	const float ViewExtentY = 1600.f;
+	FBox2D LogicalViewportAABB(
+		FVector2D(LogicalCenter.X - ViewExtentX, LogicalCenter.Y - ViewExtentY),
+		FVector2D(LogicalCenter.X + ViewExtentX, LogicalCenter.Y + ViewExtentY)
+	);
+
+	// 3. 현재 몬스터의 2D 평면 위치
+	FVector ActorLoc = GetActorLocation();
+	FVector2D ActorLoc2D(ActorLoc.X, ActorLoc.Y);
+
+	// =======================================================================
+	// 4. AABB 내부 판정 (서버 노드의 IsInside 로직과 100% 동일)
+	// =======================================================================
+	if (LogicalViewportAABB.IsInside(ActorLoc2D))
 	{
-		NewTickInterval = 0.0f;
-		StateName = TEXT("Active [Tick: 0.0s]");
+		// 박스 안 (서버 기준: 매 프레임 동기화 대상)
+		StateName = TEXT("Active [Inside AABB]");
 		DebugColor = FColor::Green;
 	}
-	// 2. 둔화 구역 (10m ~ 20m)
-	else if (Dist2D <= 2000.0f)
-	{
-		NewTickInterval = 5.0f;
-		StateName = TEXT("Slowed [Tick: 5.0s]");
-		DebugColor = FColor::Yellow;
-	}
-	// 3. 완전 삭제 대기 구역 (20m 밖)
 	else
 	{
-		NewTickInterval = 10.0f;
-		StateName = TEXT("Dormant [Tick: 10.0s]");
+		// 박스 밖 (서버 기준: 15프레임 지연 대상)
+		StateName = TEXT("Culled [Outside AABB]");
 		DebugColor = FColor::Red;
 	}
 
-	// 1. 액터 본체의 틱을 조절합니다.
-	SetActorTickInterval(NewTickInterval);
-
-	// =======================================================================
-	// [확장성 해결] 특정 컴포넌트 이름 대신, 이 액터에 붙은 '모든 컴포넌트'를 가져옵니다.
-	// =======================================================================
-	TArray<UActorComponent*> AllComponents;
-	GetComponents(AllComponents);
-
-	for (UActorComponent* Comp : AllComponents)
-	{
-		// 틱을 사용하는 활성화된 컴포넌트라면 모조리 틱 주기를 액터와 동일하게 맞춰버립니다.
-		if (Comp && Comp->PrimaryComponentTick.bCanEverTick)
-		{
-			Comp->SetComponentTickInterval(NewTickInterval);
-		}
-	}
 	// =======================================================================
 	// 디버그 출력 (캐릭터 머리 위에 거리와 현재 최적화 상태 표시)
 	// =======================================================================

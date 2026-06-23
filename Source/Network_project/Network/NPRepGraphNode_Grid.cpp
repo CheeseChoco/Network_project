@@ -125,8 +125,6 @@ void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGather
 		FConnectionReplicationActorInfo& ConnectionInfo = ConnectionActorInfoMap.FindOrAdd(Item.Actor);
 		Item.ConnectionInfo = &ConnectionInfo;
 
-
-
 		float FinalPCT = 1.0f;
 		FVector ActorLoc = Item.Actor->GetActorLocation();
 		if (LogicalViewportAABB.IsInside(FVector2D(ActorLoc.X, ActorLoc.Y))) FinalPCT = 0.0f;
@@ -135,19 +133,16 @@ void UNPRepGraphNode_Grid::GatherActorListsForConnection(const FConnectionGather
 		uint16 OutPeriod = 0; uint32 OutNextFrame = 0;
 		CalcDynamicReplicationPeriod(FinalPCT, 1, 15, ConnectionInfo.ReplicationPeriodFrame, ConnectionInfo.NextReplicationFrameNum, ConnectionInfo.LastRepFrameNum, FrameNum, false);
 		
-
 		Item.FramesTillReplicate = (int32)ConnectionInfo.NextReplicationFrameNum - (int32)FrameNum;
 
-
 		RepGraph->UpdateActorChannelCloseFrameNum(Item.Actor, ConnectionInfo, *Item.GlobalInfo, FrameNum, Params.ConnectionManager.NetConnection);
-
 
 	}
 
 	SortedReplicationList.Sort();
 	Params.OutGatheredReplicationLists.Reset();
 
-	// =====================================================================
+// =====================================================================
 // [Phase 4] 措开气 母 棺 流立 傈价 (API Replicate)
 // =====================================================================
 	const int64 MaxBitsThisFrame = 40000;

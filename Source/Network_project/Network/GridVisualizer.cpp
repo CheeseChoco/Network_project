@@ -118,7 +118,7 @@ void AGridVisualizer::DrawViewportAABB()
 	const float ViewExtentY = 1600.f;
 
 	// DrawDebugBox는 Extent(절반 크기)를 받으므로 그대로 넣어줍니다. 두께는 임의로 5.0f 지정
-	FVector Extent(ViewExtentX / 2, ViewExtentY / 2, 5.0f);
+	FVector Extent(ViewExtentX, ViewExtentY, 5.0f);
 
 	// 4. 눈에 확 띄는 색상(파란색)으로 뷰포트를 그립니다.
 	DrawDebugBox(
